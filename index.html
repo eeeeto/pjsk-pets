@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f28ab2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>♪ 世界计划 桌宠模拟器 ♪</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <!-- 选人界面 -->
+  <div id="select-screen">
+    <h1 class="app-title">♪ 世界计划 桌宠模拟器 ♪</h1>
+    <p class="sel-tip">每张卡片是角色的<b>一套服装</b> —— 先给 <b>角色1</b> 选一套（必选），再给 <b>角色2</b> 选一套（可选，再点一次取消）。<br><b>同一个角色（无论是否同一套服装）不能同时出场两位。</b></p>
+    <div class="target-switch">
+      <label><input type="radio" name="target" value="1" checked> 当前选择目标：角色1（必选）</label>
+      <label><input type="radio" name="target" value="2"> 当前选择目标：角色2（可选）</label>
+    </div>
+    <div id="thumb-grid"></div>
+    <div id="sel-status">正在下载小人模型…</div>
+    <button id="btn-start" disabled>开始同居生活 ♪</button>
+    <p class="credit">模型资源来自 sekai.best（Sekai Viewer）公开的 Project Sekai SD 模型 · 同人作品，仅供娱乐</p>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="main-screen" class="hidden">
+    <div id="room">
+      <div id="window" class="wall-deco window furniture">
+        <div class="win-frame"></div>
+        <div class="curtain l"></div>
+        <div class="curtain r"></div>
+      </div>
+      <div id="poster" class="furniture"><img id="poster-img" alt="海报"></div>
+      <div id="rug" class="furniture"></div>
+      <div id="sofa" class="furniture">
+        <div class="sofa-back"></div>
+        <div class="sofa-seat"></div>
+        <div class="sofa-arm l"></div>
+        <div class="sofa-arm r"></div>
+        <div class="cushion c1"></div>
+        <div class="cushion c2"></div>
+      </div>
+      <div id="table" class="furniture">
+        <div class="table-top"></div>
+        <div class="table-leg"></div>
+        <div class="teacup" id="table-deco">☕</div>
+      </div>
+      <div id="stage"></div>
+      <div id="fx-layer"></div>
+      <div id="bubble-1" class="bubble hidden"></div>
+      <div id="bubble-2" class="bubble hidden"></div>
+      <div id="chat-bar">
+        <input id="chat-input" type="text" maxlength="60" placeholder="和 TA 说点什么吧…">
+        <button id="chat-send">发送</button>
+      </div>
+    </div>
+    <div id="panels"></div>
+    <button id="btn-photo">📷 拍照</button>
+    <button id="btn-bgm">🎵</button>
+    <button id="btn-settings">⚙ 设置</button>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-box">
+      <button class="modal-close">✕</button>
+      <h2>设置</h2>
+
+      <section>
+        <h3>模式切换</h3>
+        <div class="mode-switch">
+          <label class="mode-opt" data-mode="oshi"><input type="radio" name="mode" value="oshi"> 推角模式</label>
+          <label class="mode-opt" data-mode="yume"><input type="radio" name="mode" value="yume"> 梦向模式</label>
+        </div>
+        <p class="mode-desc" id="mode-desc"></p>
+      </section>
+
+      <section id="general-settings">
+        <h3>通用设置（两种模式共用）</h3>
+        <div class="row"><label>BGM</label><input type="checkbox" id="set-bgm-on"></div>
+        <div class="row"><label>音量</label><input type="range" id="set-bgm-vol" min="0" max="1" step="0.05" value="0.4"></div>
+        <div class="row">
+          <label>音乐文件</label>
+          <button class="btn small" id="set-bgm-import">导入 MP3</button>
+          <button class="btn small ghost" id="set-bgm-reset" hidden>恢复默认</button>
+        </div>
+        <input type="file" id="bgm-file" accept="audio/*" hidden>
+        <div class="row"><label>桌上小物</label><input type="text" id="set-tabledeco-emoji" maxlength="8" placeholder="输入 emoji，如 🍰"></div>
+        <div class="row">
+          <label></label>
+          <button class="btn small" id="set-tabledeco-import">导入图片</button>
+          <button class="btn small ghost" id="set-tabledeco-reset">恢复 ☕</button>
+        </div>
+        <input type="file" id="tabledeco-file" accept="image/*" hidden>
+        <div class="row"><label>家具布局</label><input type="checkbox" id="set-layout"></div>
+        <div class="row">
+          <label>墙上海报</label>
+          <button class="btn small" id="set-poster-import">导入图片</button>
+          <button class="btn small ghost" id="set-poster-reset">恢复默认</button>
+        </div>
+        <div class="row"><label></label><button class="btn small ghost" id="set-layout-reset">恢复默认布局</button></div>
+        <input type="file" id="poster-file" accept="image/*" hidden>
+      </section>
+
+      <section>
+        <h3>角色1设置（必选）</h3>
+        <div class="row"><label>角色</label><select id="set-c1-char"></select></div>
+        <div class="row"><label>服装</label><select id="set-c1-costume"></select></div>
+        <div class="row"><label>水平反转</label><input type="checkbox" id="set-c1-flip"></div>
+        <div class="row"><label>允许拖动</label><input type="checkbox" id="set-c1-drag"></div>
+        <div class="row"><label>大小</label><input type="range" id="set-c1-scale" min="0.5" max="1.6" step="0.05" value="1"></div>
+        <div class="acc-block">
+          <div class="row"><label>挂件</label><span class="acc-hint">从挂件库点击或导入 PNG 进入摆放，拖到身上喜欢的位置后点「确定」锁定</span></div>
+          <div class="acc-tools" id="acc-tools-1"></div>
+          <div class="acc-list" id="acc-list-1"></div>
+        </div>
+      </section>
+
+      <section id="c2-settings">
+        <h3>角色2设置（可选）</h3>
+        <div class="row"><label>角色</label><select id="set-c2-char"></select></div>
+        <div class="row"><label>服装</label><select id="set-c2-costume"></select></div>
+        <div class="row"><label>水平反转</label><input type="checkbox" id="set-c2-flip"></div>
+        <div class="row"><label>允许拖动</label><input type="checkbox" id="set-c2-drag"></div>
+        <div class="row"><label>大小</label><input type="range" id="set-c2-scale" min="0.5" max="1.6" step="0.05" value="1"></div>
+        <div class="acc-block">
+          <div class="row"><label>挂件</label><span class="acc-hint">从挂件库点击或导入 PNG 进入摆放，拖到身上喜欢的位置后点「确定」锁定</span></div>
+          <div class="acc-tools" id="acc-tools-2"></div>
+          <div class="acc-list" id="acc-list-2"></div>
+        </div>
+      </section>
+
+      <section>
+        <h3>背景设置</h3>
+        <div id="theme-swatches" class="swatch-row"></div>
+        <div class="row">
+          <label>导入图片</label>
+          <input type="file" id="set-bgfile" accept="image/*">
+          <button class="btn small" id="btn-reset-bg">恢复默认</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>界面颜色</h3>
+        <div id="ui-swatches" class="swatch-row"></div>
+        <div class="row"><label>自定义</label><input type="color" id="set-uicolor" value="#f28ab2"></div>
+      </section>
+
+      <section>
+        <h3>词条库（每个角色独立，只显示生效中的角色）</h3>
+        <div class="row"><label>恋爱向</label><input type="checkbox" id="set-love"><span class="acc-hint">开启后点击角色有概率说爱心/亲亲颜文字</span></div>
+        <div id="quote-sections"></div>
+      </section>
+
+      <p class="credit">模型资源来自 sekai.best（Sekai Viewer）· Project Sekai 同人作品，仅供娱乐</p>
+    </div>
+  </div>
+
+  <!-- 喂食弹窗 -->
+  <div id="feed-modal" class="modal hidden">
+    <div class="modal-box small">
+      <button class="modal-close">✕</button>
+      <h2>给 <span class="feed-char-name"></span> 喂食</h2>
+      <section>
+        <h3>😊 喜欢 · 喂这个会开心</h3>
+        <div class="food-list like"></div>
+      </section>
+      <section>
+        <h3>😖 讨厌 · 喂这个会受伤……</h3>
+        <div class="food-list dislike"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 挂件摆放确认条 -->
+  <div id="place-bar" class="hidden">
+    <span id="place-tip">拖动挂件摆好位置</span>
+    <button id="place-ok" class="btn small">✔ 确定</button>
+    <button id="place-cancel" class="btn small ghost">✕ 取消</button>
+  </div>
+</div>
+<script src="assets/libs/pixi.min.js"></script>
+<script src="assets/libs/pixi-spine-4.1.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

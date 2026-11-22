@@ -1,0 +1,9 @@
+{
+  // Cloudflare Workers 静态站点配置：把仓库根目录作为静态资源直接发布
+  "name": "pjsk-pet",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application"
+  }
+}
